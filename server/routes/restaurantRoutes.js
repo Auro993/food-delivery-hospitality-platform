@@ -1,5 +1,6 @@
 const express = require("express");
 const Restaurant = require("../models/Restaurant");
+const Menu = require("../models/Menu");
 const auth = require("../middleware/auth");
 
 const router = express.Router();
@@ -44,10 +45,9 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE RESTAURANT (Change from /create to /)
+// CREATE RESTAURANT
 router.post("/", auth, async (req, res) => {
   try {
-    // Check if user is restaurant owner
     if (req.user.role !== "restaurant") {
       return res.status(403).json({
         success: false,
@@ -102,6 +102,84 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
+// UPDATE RESTAURANT
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id);
+    
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found"
+      });
+    }
+    
+    if (restaurant.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized"
+      });
+    }
+    
+    const updatedRestaurant = await Restaurant.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    
+    res.json({
+      success: true,
+      restaurant: updatedRestaurant
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error"
+    });
+  }
+});
+
+// DELETE RESTAURANT - ADD THIS ROUTE
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id);
+    
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found"
+      });
+    }
+    
+    // Check if user owns this restaurant
+    if (restaurant.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this restaurant"
+      });
+    }
+    
+    // Also delete all menu items for this restaurant
+    await Menu.deleteMany({ restaurantId: req.params.id });
+    
+    // Delete the restaurant
+    await Restaurant.findByIdAndDelete(req.params.id);
+    
+    res.json({
+      success: true,
+      message: "Restaurant and its menu items deleted successfully"
+    });
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error"
+    });
+  }
+});
+
 // GET NEARBY RESTAURANTS
 router.get("/nearby", async (req, res) => {
   try {
@@ -131,45 +209,6 @@ router.get("/nearby", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server Error",
-    });
-  }
-});
-
-// UPDATE RESTAURANT
-router.put("/:id", auth, async (req, res) => {
-  try {
-    const restaurant = await Restaurant.findById(req.params.id);
-    
-    if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        message: "Restaurant not found"
-      });
-    }
-    
-    // Check if user owns this restaurant
-    if (restaurant.ownerId.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized"
-      });
-    }
-    
-    const updatedRestaurant = await Restaurant.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
-    res.json({
-      success: true,
-      restaurant: updatedRestaurant
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error"
     });
   }
 });
