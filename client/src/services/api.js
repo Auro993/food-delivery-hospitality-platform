@@ -34,12 +34,15 @@ export const authAPI = {
   updateProfile: (data) => API.put('/auth/profile', data),
 };
 
-// Restaurant APIs
+// Restaurant APIs - UPDATED with create, update, delete
 export const restaurantAPI = {
   getAll: (params) => API.get('/restaurants', { params }),
   getById: (id) => API.get(`/restaurants/${id}`),
   getNearby: (lat, lng) => API.get('/restaurants/nearby', { params: { lat, lng } }),
   getMenu: (restaurantId) => API.get(`/restaurants/${restaurantId}/menu`),
+  create: (data) => API.post('/restaurants', data),        // ← ADDED
+  update: (id, data) => API.put(`/restaurants/${id}`, data), // ← ADDED
+  delete: (id) => API.delete(`/restaurants/${id}`),        // ← ADDED
 };
 
 // Menu APIs
