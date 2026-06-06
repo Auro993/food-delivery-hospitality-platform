@@ -34,15 +34,15 @@ export const authAPI = {
   updateProfile: (data) => API.put('/auth/profile', data),
 };
 
-// Restaurant APIs - UPDATED with create, update, delete
+// Restaurant APIs
 export const restaurantAPI = {
   getAll: (params) => API.get('/restaurants', { params }),
   getById: (id) => API.get(`/restaurants/${id}`),
   getNearby: (lat, lng) => API.get('/restaurants/nearby', { params: { lat, lng } }),
   getMenu: (restaurantId) => API.get(`/restaurants/${restaurantId}/menu`),
-  create: (data) => API.post('/restaurants', data),        // ← ADDED
-  update: (id, data) => API.put(`/restaurants/${id}`, data), // ← ADDED
-  delete: (id) => API.delete(`/restaurants/${id}`),        // ← ADDED
+  create: (data) => API.post('/restaurants', data),
+  update: (id, data) => API.put(`/restaurants/${id}`, data),
+  delete: (id) => API.delete(`/restaurants/${id}`),
 };
 
 // Menu APIs
@@ -52,7 +52,7 @@ export const menuAPI = {
   delete: (id) => API.delete(`/menu/${id}`),
 };
 
-// Cart APIs
+// Cart APIs - FIXED: Ensure endpoints match backend
 export const cartAPI = {
   getCart: () => API.get('/cart'),
   addItem: (data) => API.post('/cart/add', data),

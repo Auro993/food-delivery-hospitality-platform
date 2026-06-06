@@ -1,109 +1,175 @@
 const express = require("express");
-
-const Cart = require("../models/Cart");
-const Menu = require("../models/Menu");
-
 const router = express.Router();
+const Cart = require("../models/Cart");
+const jwt = require("jsonwebtoken");
 
-
-// ADD TO CART
-router.post("/add", async (req, res) => {
-
+// Helper to get user ID from token
+const getUserId = (req) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  
+  const token = authHeader.split(" ")[1];
+  if (!token) return null;
+  
   try {
-
-    const {
-      userId,
-      menuItemId,
-      quantity,
-    } = req.body;
-
-    // Find menu item
-    const menuItem = await Menu.findById(menuItemId);
-
-    if (!menuItem) {
-      return res.status(404).json({
-        message: "Menu item not found",
-      });
-    }
-
-    // Find existing cart
-    let cart = await Cart.findOne({ user: userId });
-
-    // Create new cart if not exists
-    if (!cart) {
-
-      cart = new Cart({
-        user: userId,
-        items: [],
-      });
-    }
-
-    // Check existing item
-    const itemIndex = cart.items.findIndex(
-      (item) =>
-        item.menuItem.toString() === menuItemId
-    );
-
-    if (itemIndex > -1) {
-
-      cart.items[itemIndex].quantity += quantity;
-
-    } else {
-
-      cart.items.push({
-        menuItem: menuItemId,
-        quantity,
-      });
-    }
-
-    // Calculate total price
-    let total = 0;
-
-    for (const item of cart.items) {
-
-      const food = await Menu.findById(item.menuItem);
-
-      total += food.price * item.quantity;
-    }
-
-    cart.totalPrice = total;
-
-    await cart.save();
-
-    res.status(200).json({
-      message: "Item added to cart",
-      cart,
-    });
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded.id;
   } catch (error) {
+    console.error("Token verification error:", error);
+    return null;
+  }
+};
 
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
+// GET cart
+router.get("/", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
+    let cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      cart = new Cart({ user: userId, items: [], totalPrice: 0 });
+      await cart.save();
+    }
+    
+    res.json({ items: cart.items || [], totalPrice: cart.totalPrice || 0 });
+  } catch (error) {
+    console.error("GET cart error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-
-// GET USER CART
-router.get("/:userId", async (req, res) => {
-
+// ADD to cart - UPDATED to store restaurantId
+router.post("/add", async (req, res) => {
   try {
-
-    const cart = await Cart.findOne({
-      user: req.params.userId,
-    }).populate("items.menuItem");
-
-    res.json(cart);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
+    const { menuItemId, name, price, quantity, image, restaurantId, restaurantName } = req.body;
+    
+    console.log("Adding to cart:", { userId, menuItemId, name, price, quantity, restaurantId, restaurantName });
+    
+    // Validate restaurantId
+    if (!restaurantId) {
+      console.warn("No restaurantId provided for item:", name);
+    }
+    
+    let cart = await Cart.findOne({ user: userId });
+    
+    if (!cart) {
+      cart = new Cart({ user: userId, items: [], totalPrice: 0 });
+    }
+    
+    const itemTotal = price * (quantity || 1);
+    
+    const existingItemIndex = cart.items.findIndex(item => item.menuItemId === menuItemId);
+    
+    if (existingItemIndex !== -1) {
+      cart.items[existingItemIndex].quantity += (quantity || 1);
+      cart.items[existingItemIndex].totalPrice = cart.items[existingItemIndex].price * cart.items[existingItemIndex].quantity;
+    } else {
+      cart.items.push({
+        menuItemId,
+        name,
+        price,
+        quantity: quantity || 1,
+        image: image || "",
+        restaurantId: restaurantId || "",  // Store restaurant ID
+        restaurantName: restaurantName || "",  // Store restaurant name
+        totalPrice: itemTotal
+      });
+    }
+    
+    cart.totalPrice = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    
+    await cart.save();
+    
+    res.json({ 
+      success: true,
+      items: cart.items, 
+      totalPrice: cart.totalPrice 
     });
+    
+  } catch (error) {
+    console.error("POST add to cart error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// UPDATE quantity
+router.put("/update/:itemId", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
+    const { quantity } = req.body;
+    const cart = await Cart.findOne({ user: userId });
+    
+    if (!cart) {
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
+    
+    const itemIndex = cart.items.findIndex(item => item._id.toString() === req.params.itemId);
+    if (itemIndex === -1) {
+      return res.status(404).json({ success: false, message: "Item not found" });
+    }
+    
+    cart.items[itemIndex].quantity = quantity;
+    cart.items[itemIndex].totalPrice = cart.items[itemIndex].price * quantity;
+    cart.totalPrice = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    
+    await cart.save();
+    
+    res.json({ items: cart.items, totalPrice: cart.totalPrice });
+  } catch (error) {
+    console.error("UPDATE cart error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// REMOVE item
+router.delete("/remove/:itemId", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
+    
+    cart.items = cart.items.filter(item => item._id.toString() !== req.params.itemId);
+    cart.totalPrice = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    await cart.save();
+    
+    res.json({ items: cart.items, totalPrice: cart.totalPrice });
+  } catch (error) {
+    console.error("DELETE cart error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// CLEAR cart
+router.delete("/clear", async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    
+    await Cart.findOneAndDelete({ user: userId });
+    res.json({ success: true, message: "Cart cleared" });
+  } catch (error) {
+    console.error("CLEAR cart error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

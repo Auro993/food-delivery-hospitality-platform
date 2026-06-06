@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft, MapPin, CreditCard } from 'lucide-react';
 import socketService from '../socket/socket';
 import { orderAPI } from '../services/api';
 import Loader from '../components/Loader';
@@ -23,6 +23,7 @@ const OrderTracking = () => {
   const fetchOrder = async () => {
     try {
       const { data } = await orderAPI.getOrderById(orderId);
+      console.log('Order details:', data);
       setOrder(data.order);
     } catch (error) {
       console.error('Failed to fetch order:', error);
@@ -44,18 +45,19 @@ const OrderTracking = () => {
 
   const getOrderSteps = () => {
     const steps = [
-      { status: 'pending', label: 'Order Placed', icon: CheckCircle, description: 'Your order has been received' },
-      { status: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, description: 'Restaurant has confirmed your order' },
-      { status: 'preparing', label: 'Preparing', icon: Package, description: 'Your food is being prepared' },
-      { status: 'out-for-delivery', label: 'Out for Delivery', icon: Truck, description: 'Delivery partner is on the way' },
-      { status: 'delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },
+      { status: 'Placed', label: 'Order Placed', icon: CheckCircle, description: 'Your order has been received' },
+      { status: 'Preparing', label: 'Preparing', icon: Package, description: 'Your food is being prepared' },
+      { status: 'Out for Delivery', label: 'Out for Delivery', icon: Truck, description: 'Delivery partner is on the way' },
+      { status: 'Delivered', label: 'Delivered', icon: Home, description: 'Enjoy your meal!' },
     ];
     return steps;
   };
 
   const getCurrentStepIndex = () => {
     const steps = getOrderSteps();
-    return steps.findIndex(step => step.status === order?.status);
+    const currentStatus = order?.orderStatus || order?.status || 'Placed';
+    const index = steps.findIndex(step => step.status === currentStatus);
+    return index === -1 ? 0 : index;
   };
 
   if (loading) return <Loader />;
@@ -75,24 +77,45 @@ const OrderTracking = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          {/* Order Info */}
+          {/* Order Info Card */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-start flex-wrap gap-4">
               <div>
-                <p className="text-sm text-gray-500">Order ID: {order._id}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Placed on: {new Date(order.createdAt).toLocaleDateString()}
-                </p>
+                <p className="text-sm text-gray-500">Order ID</p>
+                <p className="font-mono font-semibold">#{order._id?.slice(-8)}</p>
+                <p className="text-sm text-gray-500 mt-2">Placed on</p>
+                <p>{new Date(order.createdAt).toLocaleDateString()}</p>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-primary">₹{order.totalAmount}</p>
-                <p className="text-sm text-gray-500">{order.paymentMethod}</p>
+              <div>
+                <p className="text-sm text-gray-500">Payment Method</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                  <p className="font-semibold">{order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod}</p>
+                </div>
               </div>
+              <div>
+                <p className="text-sm text-gray-500">Total Amount</p>
+                <p className="text-2xl font-bold text-primary">₹{order.totalPrice}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery Address Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Delivery Address</h2>
+            </div>
+            <div className="pl-7">
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                {order.deliveryAddress || 'Address not provided'}
+              </p>
             </div>
           </div>
 
           {/* Tracking Timeline */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-8">
+            <h2 className="text-xl font-semibold mb-6">Order Status</h2>
             <div className="relative">
               {steps.map((step, index) => {
                 const Icon = step.icon;
@@ -123,9 +146,9 @@ const OrderTracking = () => {
                           {step.label}
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">{step.description}</p>
-                        {isCurrent && order.estimatedDeliveryTime && (
-                          <p className="text-sm text-primary mt-2">
-                            Estimated delivery: {order.estimatedDeliveryTime}
+                        {isCurrent && (
+                          <p className="text-sm text-primary mt-2 font-medium">
+                            Current Status
                           </p>
                         )}
                       </div>
@@ -136,12 +159,20 @@ const OrderTracking = () => {
             </div>
           </div>
 
-          {/* Delivery Address */}
+          {/* Order Items Summary */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-            <h3 className="font-semibold text-lg mb-3">Delivery Address</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {order.deliveryAddress?.address}, {order.deliveryAddress?.city} - {order.deliveryAddress?.pincode}
-            </p>
+            <h2 className="text-xl font-semibold mb-4">Order Items</h2>
+            <div className="space-y-3">
+              {order.items?.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                  </div>
+                  <p className="font-semibold">₹{item.totalPrice || item.price * item.quantity}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -4,71 +4,116 @@ import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [], totalPrice: 0 });
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
       fetchCart();
+    } else {
+      setCart({ items: [], totalPrice: 0 });
     }
   }, [user]);
 
   const fetchCart = async () => {
     try {
+      setLoading(true);
       const { data } = await cartAPI.getCart();
-      setCart(data);
+      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
     } catch (error) {
       console.error('Failed to fetch cart:', error);
+      setCart({ items: [], totalPrice: 0 });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addToCart = async (menuItem, quantity = 1, specialInstructions = '') => {
+  const addToCart = async (menuItem, quantity = 1, restaurantId = null, restaurantName = null) => {
     try {
-      const { data } = await cartAPI.addItem({
+      setLoading(true);
+      const cartItem = {
         menuItemId: menuItem._id,
-        quantity,
-        specialInstructions,
+        name: menuItem.name,
         price: menuItem.price,
-      });
-      setCart(data);
+        quantity: quantity,
+        image: menuItem.image,
+        restaurantId: restaurantId,
+        restaurantName: restaurantName,
+        specialInstructions: ''
+      };
+      
+      console.log('Adding to cart:', cartItem);
+      
+      const { data } = await cartAPI.addItem(cartItem);
+      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
       return data;
     } catch (error) {
+      console.error('Failed to add to cart:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateQuantity = async (itemId, quantity) => {
     try {
+      setLoading(true);
       const { data } = await cartAPI.updateQuantity(itemId, quantity);
-      setCart(data);
+      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
     } catch (error) {
       console.error('Failed to update quantity:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const removeItem = async (itemId) => {
     try {
+      setLoading(true);
       const { data } = await cartAPI.removeItem(itemId);
-      setCart(data);
+      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
     } catch (error) {
       console.error('Failed to remove item:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const clearCart = async () => {
     try {
+      setLoading(true);
       await cartAPI.clearCart();
       setCart({ items: [], totalPrice: 0 });
     } catch (error) {
       console.error('Failed to clear cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, updateQuantity, removeItem, clearCart, fetchCart }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      loading,
+      addToCart, 
+      updateQuantity, 
+      removeItem, 
+      clearCart, 
+      fetchCart 
+    }}>
       {children}
     </CartContext.Provider>
   );

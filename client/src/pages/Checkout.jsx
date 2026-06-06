@@ -6,10 +6,11 @@ import { orderAPI } from '../services/api';
 import { CreditCard, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
-  const { cart, clearCart } = useCart();
+  const { cart, clearCart, fetchCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     address: '',
     city: '',
@@ -19,9 +20,9 @@ const Checkout = () => {
     specialInstructions: '',
   });
 
-  const deliveryFee = cart.totalPrice > 500 ? 0 : 40;
-  const tax = cart.totalPrice * 0.05;
-  const total = cart.totalPrice + deliveryFee + tax;
+  const deliveryFee = (cart.totalPrice || 0) > 500 ? 0 : 40;
+  const tax = (cart.totalPrice || 0) * 0.05;
+  const total = (cart.totalPrice || 0) + deliveryFee + tax;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,14 +30,41 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
 
+    // Validation
+    if (!formData.address || !formData.city || !formData.pincode) {
+      setError('Please fill in all address fields');
+      setLoading(false);
+      return;
+    }
+
+    if (!cart.items || cart.items.length === 0) {
+      setError('Your cart is empty');
+      setLoading(false);
+      return;
+    }
+
+    // Get restaurant ID from the first cart item (stored when adding to cart)
+    const restaurantId = cart.items[0]?.restaurantId;
+    
+    console.log('Cart items:', cart.items);
+    console.log('Restaurant ID from cart:', restaurantId);
+
+    if (!restaurantId) {
+      setError('Restaurant information missing. Please try adding items to cart again.');
+      setLoading(false);
+      return;
+    }
+
     const orderData = {
-      restaurantId: cart.items[0]?.menuItemId?.restaurantId,
+      restaurantId: restaurantId,
       items: cart.items.map(item => ({
-        menuItemId: item.menuItemId._id,
+        menuItemId: item.menuItemId,
+        name: item.name,
+        price: item.price,
         quantity: item.quantity,
-        price: item.menuItemId.price,
       })),
       totalAmount: total,
       deliveryAddress: {
@@ -48,17 +76,39 @@ const Checkout = () => {
       specialInstructions: formData.specialInstructions,
     };
 
+    console.log('Placing order:', orderData);
+
     try {
       const { data } = await orderAPI.createOrder(orderData);
+      console.log('Order response:', data);
+      
+      // Clear cart
       await clearCart();
+      await fetchCart();
+      
+      // Navigate to order tracking
       navigate(`/tracking/${data.order._id}`);
-    } catch (error) {
-      console.error('Order failed:', error);
-      alert(error.response?.data?.message || 'Failed to place order');
+    } catch (err) {
+      console.error('Order failed:', err);
+      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (!cart.items || cart.items.length === 0) {
+    return (
+      <div className="min-h-screen pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Your cart is empty</h2>
+          <p className="text-gray-500 mb-6">Add some items to your cart before checkout</p>
+          <button onClick={() => navigate('/restaurants')} className="btn-primary">
+            Browse Restaurants
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 bg-gray-50 dark:bg-gray-900">
@@ -69,6 +119,12 @@ const Checkout = () => {
           </button>
           <h1 className="text-3xl font-bold">Checkout</h1>
         </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
@@ -83,21 +139,21 @@ const Checkout = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Full Address</label>
-                    <textarea
+                    <label className="block text-sm font-medium mb-2">Full Address *</label>
+                    <input
+                      type="text"
                       name="address"
                       value={formData.address}
                       onChange={handleChange}
                       className="input-field"
-                      rows="3"
                       placeholder="House No., Street, Landmark"
                       required
-                    ></textarea>
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">City</label>
+                      <label className="block text-sm font-medium mb-2">City *</label>
                       <input
                         type="text"
                         name="city"
@@ -108,7 +164,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Pincode</label>
+                      <label className="block text-sm font-medium mb-2">Pincode *</label>
                       <input
                         type="text"
                         name="pincode"
@@ -128,7 +184,6 @@ const Checkout = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       className="input-field"
-                      required
                     />
                   </div>
                 </div>
@@ -153,14 +208,13 @@ const Checkout = () => {
                     />
                     <span>Cash on Delivery</span>
                   </label>
-                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 opacity-50">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="online"
-                      checked={formData.paymentMethod === 'online'}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-primary"
+                      disabled
+                      className="w-4 h-4"
                     />
                     <span>Online Payment (Coming Soon)</span>
                   </label>
@@ -193,16 +247,22 @@ const Checkout = () => {
               <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
                 {cart.items?.map((item) => (
                   <div key={item._id} className="flex justify-between text-sm">
-                    <span>{item.quantity}x {item.menuItemId?.name}</span>
-                    <span>₹{item.totalPrice}</span>
+                    <span>{item.quantity}x {item.name}</span>
+                    <span>₹{item.totalPrice || item.price * item.quantity}</span>
                   </div>
                 ))}
               </div>
               
+              {cart.items[0]?.restaurantName && (
+                <div className="text-xs text-gray-500 mb-3">
+                  Restaurant: {cart.items[0].restaurantName}
+                </div>
+              )}
+              
               <div className="border-t pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>₹{cart.totalPrice}</span>
+                  <span>₹{cart.totalPrice || 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Delivery Fee</span>
@@ -225,7 +285,14 @@ const Checkout = () => {
                 disabled={loading}
                 className="btn-primary w-full mt-6 disabled:opacity-50"
               >
-                {loading ? 'Placing Order...' : `Place Order • ₹${total.toFixed(2)}`}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Placing Order...
+                  </span>
+                ) : (
+                  `Place Order • ₹${total.toFixed(2)}`
+                )}
               </button>
             </div>
           </div>

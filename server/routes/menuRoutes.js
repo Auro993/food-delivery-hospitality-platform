@@ -14,6 +14,32 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET single menu item by ID - ADD THIS ROUTE
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const menuItem = await Menu.findById(id).populate("restaurantId");
+    
+    if (!menuItem) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Menu item not found" 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      menuItem: menuItem 
+    });
+  } catch (error) {
+    console.error("Get menu item error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server Error" 
+    });
+  }
+});
+
 // GET menu items for specific restaurant
 router.get("/restaurant/:restaurantId", async (req, res) => {
   try {
@@ -75,7 +101,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-// UPDATE menu item - ADD THIS ROUTE
+// UPDATE menu item
 router.put("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -110,7 +136,7 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-// DELETE menu item - ADD THIS ROUTE
+// DELETE menu item
 router.delete("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
