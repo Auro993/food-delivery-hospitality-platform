@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X } from 'lucide-react';
-import { menuAPI } from '../services/api';
+import { menuAPI, restaurantAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const AddMenu = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [restaurant, setRestaurant] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -17,7 +20,30 @@ const AddMenu = () => {
   });
   const [imagePreview, setImagePreview] = useState('');
 
-  const categories = ['Appetizers', 'Main Course', 'Biryani', 'Pizza', 'Burgers', 'Desserts', 'Beverages'];
+  const categories = ['Appetizers', 'Main Course', 'Biryani', 'Pizza', 'Burgers', 'Desserts', 'Beverages', 'Kebabs', 'Rolls', 'Breads'];
+
+  // Fetch the owner's restaurant
+  useEffect(() => {
+    fetchRestaurant();
+  }, []);
+
+  const fetchRestaurant = async () => {
+    try {
+      const { data } = await restaurantAPI.getAll();
+      // Find the restaurant owned by this user
+      const userRestaurant = data.restaurants?.find(r => r.ownerId === user?._id);
+      if (userRestaurant) {
+        setRestaurant(userRestaurant);
+        console.log('Found restaurant:', userRestaurant);
+      } else {
+        alert('No restaurant found. Please create a restaurant first.');
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Failed to fetch restaurant:', error);
+      alert('Failed to load restaurant. Please try again.');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,15 +67,57 @@ const AddMenu = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.name) {
+      alert('Please enter item name');
+      return;
+    }
+    if (!formData.price) {
+      alert('Please enter price');
+      return;
+    }
+    if (!restaurant) {
+      alert('No restaurant found. Please create a restaurant first.');
+      return;
+    }
+    if (!restaurant._id) {
+      alert('Restaurant ID not found');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      await menuAPI.create({
-        ...formData,
+      const menuData = {
+        name: formData.name,
+        description: formData.description || '',
         price: Number(formData.price),
-      });
+        category: formData.category || 'Uncategorized',
+        restaurantId: restaurant._id,  // Use the restaurant ID from fetched restaurant
+        isVegetarian: formData.isVegetarian,
+        isAvailable: formData.isAvailable,
+        image: formData.image || '',
+      };
+      
+      console.log('Sending menu data:', menuData);
+      
+      const response = await menuAPI.create(menuData);
+      console.log('Menu item created:', response.data);
+      
       alert('Menu item added successfully!');
-      navigate('/dashboard');
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        isVegetarian: true,
+        isAvailable: true,
+        image: '',
+      });
+      setImagePreview('');
+      
     } catch (error) {
       console.error('Failed to add menu:', error);
       alert(error.response?.data?.message || 'Failed to add menu item');
@@ -58,6 +126,20 @@ const AddMenu = () => {
     }
   };
 
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen pt-20 bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">No Restaurant Found</h2>
+          <p className="text-gray-600 mb-6">Please create a restaurant first before adding menu items.</p>
+          <button onClick={() => navigate('/dashboard')} className="btn-primary">
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-20 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -65,7 +147,7 @@ const AddMenu = () => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Add New Menu Item
           </h1>
-          <p className="text-gray-600 mt-2">Add delicious items to your restaurant menu</p>
+          <p className="text-gray-600 mt-2">Add delicious items to your restaurant: <span className="font-semibold">{restaurant.name}</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-6">
@@ -94,7 +176,21 @@ const AddMenu = () => {
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
               )}
+              <p className="text-xs text-gray-500">Or use image URL directly below</p>
             </div>
+          </div>
+
+          {/* Image URL Input */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Image URL (alternative)</label>
+            <input
+              type="text"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="https://images.unsplash.com/..."
+            />
           </div>
 
           {/* Item Name */}
@@ -106,7 +202,7 @@ const AddMenu = () => {
               value={formData.name}
               onChange={handleChange}
               className="input-field"
-              placeholder="e.g., Margherita Pizza"
+              placeholder="e.g., Butter Chicken"
               required
             />
           </div>

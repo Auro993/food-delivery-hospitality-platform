@@ -18,8 +18,15 @@ const Login = () => {
     setLoading(true);
     
     try {
-      await login(email, password);
-      navigate('/');
+      const result = await login(email, password);
+      console.log('Login successful:', result);
+      
+      // Redirect based on user role
+      if (result.user.role === 'restaurant') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {

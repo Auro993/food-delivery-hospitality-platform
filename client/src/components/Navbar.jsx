@@ -157,6 +157,12 @@ const Navbar = () => {
               </Link>
             )}
             
+            {user && (
+              <Link to="/profile" className="block text-gray-700 hover:text-primary transition py-2" onClick={() => setIsOpen(false)}>
+                Profile
+              </Link>
+            )}
+            
             <Link to="/cart" className="block text-gray-700 hover:text-primary transition py-2" onClick={() => setIsOpen(false)}>
               Cart ({cartItemsCount})
             </Link>

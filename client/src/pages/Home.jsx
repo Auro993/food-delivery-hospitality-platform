@@ -10,15 +10,19 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [showContent, setShowContent] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchRestaurants();
     // Show splash screen for 3 seconds
-    const timer = setTimeout(() => {
+    const splashTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 3500);
-    return () => clearTimeout(timer);
+      // Small delay to ensure smooth transition
+      setTimeout(() => setShowContent(true), 100);
+    }, 3000);
+    
+    return () => clearTimeout(splashTimer);
   }, []);
 
   const fetchRestaurants = async () => {
@@ -43,7 +47,7 @@ const Home = () => {
   // Splash Screen Component
   if (showSplash) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 z-50 flex items-center justify-center animate-fade-out">
+      <div className="fixed inset-0 bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 z-50 flex items-center justify-center">
         <div className="text-center">
           {/* Animated Logo */}
           <div className="mb-8 animate-float">
@@ -57,7 +61,7 @@ const Home = () => {
             Dine<span className="text-yellow-300">Flow</span>
           </h1>
           
-          {/* Tagline with Typewriter Effect */}
+          {/* Tagline */}
           <div className="h-14 overflow-hidden">
             <p className="text-white/90 text-lg md:text-xl animate-typewriter">
               Taste the difference 🍕
@@ -75,21 +79,21 @@ const Home = () => {
     );
   }
 
-  if (loading) {
+  // Don't show main content until after splash screen
+  if (!showContent || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading delicious restaurants...</p>
-          <p className="text-gray-400 text-sm mt-2">Getting the best food for you 🍕</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Hero Section - Premium Design */}
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 animate-fade-in">
+      {/* Hero Section */}
       <div className="relative min-h-[650px] md:min-h-[750px] bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 overflow-hidden mt-0">
         {/* Animated Background Shapes */}
         <div className="absolute inset-0 opacity-30">
@@ -123,7 +127,7 @@ const Home = () => {
             Delivered fresh to your doorstep in 30 minutes
           </p>
           
-          {/* Premium Search Bar */}
+          {/* Search Bar */}
           <div className="w-full max-w-3xl relative mb-6 animate-slide-up">
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary rounded-2xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500"></div>
@@ -141,7 +145,7 @@ const Home = () => {
             </div>
           </div>
           
-          {/* Popular Searches - FIXED VISIBILITY */}
+          {/* Popular Searches */}
           <div className="flex flex-wrap justify-center gap-3 mt-4 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 animate-fade-in animation-delay-400">
             <span className="text-white font-medium">🔥 Popular:</span>
             {['Pizza', 'Burger', 'Biryani', 'Sushi', 'Pasta', 'Ice Cream'].map((item, idx) => (
@@ -188,7 +192,7 @@ const Home = () => {
 
       {/* Welcome Banner for Logged-in Users */}
       {user && (
-        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 py-4 border-b border-primary/20 animate-slide-down">
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 py-4 border-b border-primary/20">
           <div className="container mx-auto px-4 text-center">
             <p className="text-gray-700">
               🎉 Welcome back, <span className="font-bold text-primary">{user.name}</span>! 
@@ -202,17 +206,18 @@ const Home = () => {
         </div>
       )}
 
-      {/* Categories Section - Enhanced */}
+      {/* Rest of your component remains the same... */}
+      {/* Categories Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-1.5 mb-4 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-1.5 mb-4">
             <Flame className="w-4 h-4 text-primary animate-pulse" />
             <span className="text-primary text-sm font-medium">Top Categories</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent animate-slide-down">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             What's on your mind?
           </h2>
-          <p className="text-gray-500 mt-3 text-lg animate-fade-in">Explore our handpicked categories</p>
+          <p className="text-gray-500 mt-3 text-lg">Explore our handpicked categories</p>
         </div>
         
         <div className="flex justify-center gap-8 md:gap-12 flex-wrap">
@@ -230,28 +235,24 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Stats Section - Enhanced */}
+      {/* Stats Section */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-40 h-40 bg-primary rounded-full blur-3xl animate-pulse-slow"></div>
-          <div className="absolute bottom-10 right-10 w-60 h-60 bg-secondary rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
-        </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="transform hover:scale-110 transition duration-300">
-              <div className="text-4xl md:text-5xl font-bold text-primary animate-count-up">100+</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary">100+</div>
               <div className="text-sm text-gray-300 mt-2">Partner Restaurants</div>
             </div>
             <div className="transform hover:scale-110 transition duration-300">
-              <div className="text-4xl md:text-5xl font-bold text-primary animate-count-up">500+</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary">500+</div>
               <div className="text-sm text-gray-300 mt-2">Delicious Dishes</div>
             </div>
             <div className="transform hover:scale-110 transition duration-300">
-              <div className="text-4xl md:text-5xl font-bold text-primary animate-count-up">10k+</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary">10k+</div>
               <div className="text-sm text-gray-300 mt-2">Happy Customers</div>
             </div>
             <div className="transform hover:scale-110 transition duration-300">
-              <div className="text-4xl md:text-5xl font-bold text-primary animate-count-up">24/7</div>
+              <div className="text-4xl md:text-5xl font-bold text-primary">24/7</div>
               <div className="text-sm text-gray-300 mt-2">Customer Support</div>
             </div>
           </div>
@@ -262,12 +263,12 @@ const Home = () => {
       <div className="container mx-auto px-4 md:px-8 lg:px-12 py-20">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-1.5 mb-3 animate-fade-in">
+            <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-1.5 mb-3">
               <Star className="w-4 h-4 text-primary fill-current" />
               <span className="text-primary text-sm font-medium">Top Rated</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white animate-slide-down">Popular Restaurants</h2>
-            <p className="text-gray-500 mt-2 text-base animate-fade-in">Handpicked just for you</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Popular Restaurants</h2>
+            <p className="text-gray-500 mt-2 text-base">Handpicked just for you</p>
           </div>
           <Link to="/restaurants" className="text-primary hover:underline flex items-center gap-1 font-semibold group">
             View All
@@ -293,8 +294,8 @@ const Home = () => {
         )}
       </div>
 
-      {/* Download App Banner - Enhanced */}
-      <div className="bg-gradient-to-r from-primary to-secondary mx-4 md:mx-auto md:max-w-6xl rounded-3xl p-8 md:p-14 my-16 shadow-2xl transform hover:scale-105 transition duration-500 animate-fade-in">
+      {/* Download App Banner */}
+      <div className="bg-gradient-to-r from-primary to-secondary mx-4 md:mx-auto md:max-w-6xl rounded-3xl p-8 md:p-14 my-16 shadow-2xl transform hover:scale-105 transition duration-500">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="text-white text-center md:text-left">
             <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 mb-4">

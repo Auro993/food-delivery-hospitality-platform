@@ -26,12 +26,13 @@ API.interceptors.response.use(
   }
 );
 
-// Auth APIs
+// Auth APIs - ADDED updateProfile and changePassword
 export const authAPI = {
   register: (userData) => API.post('/auth/register', userData),
   login: (credentials) => API.post('/auth/login', credentials),
   getProfile: () => API.get('/auth/profile'),
   updateProfile: (data) => API.put('/auth/profile', data),
+  changePassword: (passwordData) => API.put('/auth/change-password', passwordData),
 };
 
 // Restaurant APIs
@@ -52,7 +53,7 @@ export const menuAPI = {
   delete: (id) => API.delete(`/menu/${id}`),
 };
 
-// Cart APIs - FIXED: Ensure endpoints match backend
+// Cart APIs
 export const cartAPI = {
   getCart: () => API.get('/cart'),
   addItem: (data) => API.post('/cart/add', data),

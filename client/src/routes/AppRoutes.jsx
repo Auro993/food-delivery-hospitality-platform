@@ -1,4 +1,3 @@
-// src/routes/AppRoutes.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -18,6 +17,7 @@ const Orders = React.lazy(() => import('../pages/Orders'));
 const OrderTracking = React.lazy(() => import('../pages/OrderTracking'));
 const Dashboard = React.lazy(() => import('../pages/Dashboard'));
 const AddMenu = React.lazy(() => import('../pages/AddMenu'));
+const Profile = React.lazy(() => import('../pages/Profile'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 const AppRoutes = () => {
@@ -52,6 +52,11 @@ const AppRoutes = () => {
           <Route path="/tracking/:orderId" element={
             <ProtectedRoute>
               <OrderTracking />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           } />
           
