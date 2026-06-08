@@ -28,8 +28,12 @@ export const CartProvider = ({ children }) => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const { data } = await cartAPI.getCart();
-      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
+      const response = await cartAPI.getCart();
+      console.log('Fetch cart response:', response.data);
+      setCart({ 
+        items: response.data.items || [], 
+        totalPrice: response.data.totalPrice || 0 
+      });
     } catch (error) {
       console.error('Failed to fetch cart:', error);
       setCart({ items: [], totalPrice: 0 });
@@ -41,24 +45,33 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (menuItem, quantity = 1, restaurantId = null, restaurantName = null) => {
     try {
       setLoading(true);
+      
+      // Prepare the item data
       const cartItem = {
         menuItemId: menuItem._id,
         name: menuItem.name,
         price: menuItem.price,
         quantity: quantity,
-        image: menuItem.image,
+        image: menuItem.image || '',
         restaurantId: restaurantId,
-        restaurantName: restaurantName,
+        restaurantName: restaurantName || '',
         specialInstructions: ''
       };
       
       console.log('Adding to cart:', cartItem);
       
-      const { data } = await cartAPI.addItem(cartItem);
-      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
-      return data;
+      const response = await cartAPI.addItem(cartItem);
+      console.log('Add to cart response:', response.data);
+      
+      setCart({ 
+        items: response.data.items || [], 
+        totalPrice: response.data.totalPrice || 0 
+      });
+      
+      return response.data;
     } catch (error) {
       console.error('Failed to add to cart:', error);
+      console.error('Error details:', error.response?.data);
       throw error;
     } finally {
       setLoading(false);
@@ -68,8 +81,11 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (itemId, quantity) => {
     try {
       setLoading(true);
-      const { data } = await cartAPI.updateQuantity(itemId, quantity);
-      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
+      const response = await cartAPI.updateQuantity(itemId, quantity);
+      setCart({ 
+        items: response.data.items || [], 
+        totalPrice: response.data.totalPrice || 0 
+      });
     } catch (error) {
       console.error('Failed to update quantity:', error);
       throw error;
@@ -81,8 +97,11 @@ export const CartProvider = ({ children }) => {
   const removeItem = async (itemId) => {
     try {
       setLoading(true);
-      const { data } = await cartAPI.removeItem(itemId);
-      setCart({ items: data.items || [], totalPrice: data.totalPrice || 0 });
+      const response = await cartAPI.removeItem(itemId);
+      setCart({ 
+        items: response.data.items || [], 
+        totalPrice: response.data.totalPrice || 0 
+      });
     } catch (error) {
       console.error('Failed to remove item:', error);
       throw error;

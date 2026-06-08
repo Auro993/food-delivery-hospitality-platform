@@ -11,6 +11,7 @@ const restaurantRoutes = require("./routes/restaurantRoutes");
 const menuRoutes = require("./routes/menuRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const reviewRoutes = require("./routes/reviewRoutes"); // ADD THIS
 
 dotenv.config();
 connectDB();
@@ -67,6 +68,7 @@ app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/reviews", reviewRoutes); // ADD THIS
 
 // HOME ROUTE
 app.get("/", (req, res) => {

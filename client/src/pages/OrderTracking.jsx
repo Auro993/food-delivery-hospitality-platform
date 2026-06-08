@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft, MapPin, CreditCard } from 'lucide-react';
+import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft, MapPin, CreditCard, Star } from 'lucide-react';
 import socketService from '../socket/socket';
-import { orderAPI } from '../services/api';
+import { orderAPI, reviewAPI } from '../services/api';
 import Loader from '../components/Loader';
+import ReviewModal from '../components/ReviewModal';
 
 const OrderTracking = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     fetchOrder();
@@ -25,10 +29,25 @@ const OrderTracking = () => {
       const { data } = await orderAPI.getOrderById(orderId);
       console.log('Order details:', data);
       setOrder(data.order);
+      
+      // Check if can review
+      if (data.order?.orderStatus === 'Delivered') {
+        checkCanReview(data.order._id);
+      }
     } catch (error) {
       console.error('Failed to fetch order:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkCanReview = async (id) => {
+    try {
+      const { data } = await reviewAPI.canReview(id);
+      setCanReview(data.canReview);
+      setHasReviewed(data.hasReviewed);
+    } catch (error) {
+      console.error('Failed to check review status:', error);
     }
   };
 
@@ -39,8 +58,16 @@ const OrderTracking = () => {
       socketService.joinOrderRoom(orderId);
       socketService.onOrderUpdate((updatedOrder) => {
         setOrder(updatedOrder);
+        if (updatedOrder?.orderStatus === 'Delivered') {
+          checkCanReview(updatedOrder._id);
+        }
       });
     }
+  };
+
+  const handleReviewSuccess = () => {
+    setHasReviewed(true);
+    setCanReview(false);
   };
 
   const getOrderSteps = () => {
@@ -124,7 +151,6 @@ const OrderTracking = () => {
                 
                 return (
                   <div key={step.status} className="relative mb-8 last:mb-0">
-                    {/* Connector Line */}
                     {index < steps.length - 1 && (
                       <div 
                         className={`absolute left-6 top-12 w-0.5 h-16 ${
@@ -160,7 +186,7 @@ const OrderTracking = () => {
           </div>
 
           {/* Order Items Summary */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
             <div className="space-y-3">
               {order.items?.map((item, idx) => (
@@ -174,8 +200,42 @@ const OrderTracking = () => {
               ))}
             </div>
           </div>
+
+          {/* Rate Your Experience Button - SHOWN ONLY FOR DELIVERED ORDERS NOT REVIEWED */}
+          {order.orderStatus === 'Delivered' && canReview && !hasReviewed && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
+              <Star className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Enjoyed your meal?</h3>
+              <p className="text-gray-500 mb-4">Share your experience with the restaurant</p>
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="btn-primary inline-flex items-center gap-2"
+              >
+                <Star className="w-4 h-4" />
+                Rate & Review
+              </button>
+            </div>
+          )}
+
+          {/* Already Reviewed Message */}
+          {order.orderStatus === 'Delivered' && hasReviewed && (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl shadow-md p-6 text-center">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <h3 className="text-xl font-semibold text-green-600 mb-2">Thank You for Your Review!</h3>
+              <p className="text-gray-500">Your feedback helps others make better choices</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <ReviewModal
+          order={order}
+          onClose={() => setShowReviewModal(false)}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </div>
   );
 };

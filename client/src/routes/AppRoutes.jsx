@@ -11,6 +11,7 @@ const Login = React.lazy(() => import('../pages/Login'));
 const Register = React.lazy(() => import('../pages/Register'));
 const Restaurants = React.lazy(() => import('../pages/Restaurants'));
 const RestaurantDetails = React.lazy(() => import('../pages/RestaurantDetails'));
+const RestaurantReviews = React.lazy(() => import('../pages/RestaurantReviews')); // ADD THIS
 const Cart = React.lazy(() => import('../pages/Cart'));
 const Checkout = React.lazy(() => import('../pages/Checkout'));
 const Orders = React.lazy(() => import('../pages/Orders'));
@@ -32,6 +33,7 @@ const AppRoutes = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/restaurants" element={<Restaurants />} />
           <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+          <Route path="/restaurant/:restaurantId/reviews" element={<RestaurantReviews />} /> {/* ADD THIS */}
           
           {/* Customer Routes - Any logged in user */}
           <Route path="/cart" element={

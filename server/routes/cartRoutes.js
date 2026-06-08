@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ADD to cart - UPDATED to store restaurantId
+// ADD to cart
 router.post("/add", async (req, res) => {
   try {
     const userId = getUserId(req);
@@ -49,15 +49,19 @@ router.post("/add", async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
     
-    const { menuItemId, name, price, quantity, image, restaurantId, restaurantName } = req.body;
+    const { menuItemId, name, price, quantity, image, restaurantId, restaurantName, specialInstructions } = req.body;
     
-    console.log("Adding to cart:", { userId, menuItemId, name, price, quantity, restaurantId, restaurantName });
+    console.log("Add to cart request:", { userId, menuItemId, name, price, quantity, restaurantId });
     
-    // Validate restaurantId
-    if (!restaurantId) {
-      console.warn("No restaurantId provided for item:", name);
+    // Validation
+    if (!menuItemId || !name || !price) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Missing required fields: menuItemId, name, price" 
+      });
     }
     
+    // Find existing cart
     let cart = await Cart.findOne({ user: userId });
     
     if (!cart) {
@@ -66,24 +70,28 @@ router.post("/add", async (req, res) => {
     
     const itemTotal = price * (quantity || 1);
     
+    // Check if item already exists in cart
     const existingItemIndex = cart.items.findIndex(item => item.menuItemId === menuItemId);
     
     if (existingItemIndex !== -1) {
+      // Update quantity
       cart.items[existingItemIndex].quantity += (quantity || 1);
       cart.items[existingItemIndex].totalPrice = cart.items[existingItemIndex].price * cart.items[existingItemIndex].quantity;
     } else {
+      // Add new item
       cart.items.push({
         menuItemId,
         name,
         price,
         quantity: quantity || 1,
         image: image || "",
-        restaurantId: restaurantId || "",  // Store restaurant ID
-        restaurantName: restaurantName || "",  // Store restaurant name
+        restaurantId: restaurantId || "",
+        restaurantName: restaurantName || "",
         totalPrice: itemTotal
       });
     }
     
+    // Recalculate total price
     cart.totalPrice = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
     
     await cart.save();

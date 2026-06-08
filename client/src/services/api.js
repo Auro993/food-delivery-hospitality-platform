@@ -26,7 +26,7 @@ API.interceptors.response.use(
   }
 );
 
-// Auth APIs - ADDED updateProfile and changePassword
+// Auth APIs
 export const authAPI = {
   register: (userData) => API.post('/auth/register', userData),
   login: (credentials) => API.post('/auth/login', credentials),
@@ -69,6 +69,16 @@ export const orderAPI = {
   getOrderById: (id) => API.get(`/orders/${id}`),
   updateOrderStatus: (id, status) => API.put(`/orders/${id}/status`, { status }),
   getRestaurantOrders: () => API.get('/orders/restaurant'),
+};
+
+// Review APIs - ADD THIS SECTION
+export const reviewAPI = {
+  createReview: (data) => API.post('/reviews', data),
+  getRestaurantReviews: (restaurantId, page = 1) => 
+    API.get(`/reviews/restaurant/${restaurantId}?page=${page}&limit=10`),
+  markHelpful: (reviewId) => API.post(`/reviews/${reviewId}/helpful`),
+  replyToReview: (reviewId, replyText) => API.post(`/reviews/${reviewId}/reply`, { replyText }),
+  canReview: (orderId) => API.get(`/reviews/can-review/${orderId}`),
 };
 
 // Default export
