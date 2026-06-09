@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import WishlistButton from './WishlistButton';
 
 const MenuCard = ({ item, restaurantId }) => {
   const [quantity, setQuantity] = useState(1);
@@ -13,7 +14,6 @@ const MenuCard = ({ item, restaurantId }) => {
 
   if (!item) return null;
 
-  // Handle both field name cases
   const menuItem = {
     _id: item._id,
     name: item.name,
@@ -31,7 +31,7 @@ const MenuCard = ({ item, restaurantId }) => {
 
     setIsAdding(true);
     try {
-      await addToCart(menuItem, quantity);
+      await addToCart(menuItem, quantity, restaurantId);
       setQuantity(1);
       alert('Added to cart!');
     } catch (error) {
@@ -55,8 +55,20 @@ const MenuCard = ({ item, restaurantId }) => {
           />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-lg">{item.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">{item.description || 'Delicious food item'}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold text-lg">{item.name}</h3>
+              <p className="text-sm text-gray-500 mt-1">{item.description || 'Delicious food item'}</p>
+            </div>
+            <WishlistButton
+              type="menu"
+              itemId={item._id}
+              name={item.name}
+              image={item.image}
+              price={item.price}
+              size="sm"
+            />
+          </div>
           <div className="flex items-center gap-4 mt-3">
             <div className="flex items-center gap-2 border rounded-lg">
               <button onClick={decreaseQuantity} className="px-3 py-1 hover:bg-gray-100">-</button>

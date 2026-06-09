@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Edit2, Save, X, Camera, Lock, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, Mail, Phone, MapPin, Edit2, Save, X, Camera, Lock, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import Loader from '../components/Loader';
@@ -130,7 +130,6 @@ const Profile = () => {
   return (
     <div className="min-h-screen pt-20 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             My Profile
@@ -140,7 +139,6 @@ const Profile = () => {
           </p>
         </div>
 
-        {/* Success/Error Messages */}
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
             {success}
@@ -156,7 +154,6 @@ const Profile = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
-              {/* Avatar */}
               <div className="relative inline-block">
                 <div className="w-32 h-32 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center mx-auto shadow-lg">
                   <span className="text-5xl text-white font-bold">
@@ -175,7 +172,14 @@ const Profile = () => {
                 {user.role === 'restaurant' ? 'Restaurant Owner' : 'Customer'}
               </p>
               
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-6 space-y-3">
+                <Link 
+                  to="/wishlist" 
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition"
+                >
+                  <Heart className="w-4 h-4" />
+                  My Wishlist
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
@@ -228,7 +232,6 @@ const Profile = () => {
               </div>
 
               <form onSubmit={handleUpdateProfile} className="p-6 space-y-5">
-                {/* Name */}
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     <User className="w-4 h-4 inline mr-2" />
@@ -248,7 +251,6 @@ const Profile = () => {
                   />
                 </div>
 
-                {/* Email */}
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     <Mail className="w-4 h-4 inline mr-2" />
@@ -265,7 +267,6 @@ const Profile = () => {
                   <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
 
-                {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     <Phone className="w-4 h-4 inline mr-2" />
@@ -285,7 +286,6 @@ const Profile = () => {
                   />
                 </div>
 
-                {/* Address */}
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     <MapPin className="w-4 h-4 inline mr-2" />
@@ -317,7 +317,7 @@ const Profile = () => {
                           isEditing
                             ? 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/50'
                             : 'border-gray-200 bg-gray-50'
-                      } outline-none transition`}
+                        } outline-none transition`}
                       />
                       <input
                         type="text"

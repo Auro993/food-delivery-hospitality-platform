@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Clock, MapPin, Heart, Bike } from 'lucide-react';
+import WishlistButton from './WishlistButton';
 
 const RestaurantCard = ({ restaurant }) => {
   if (!restaurant) return null;
@@ -8,7 +9,6 @@ const RestaurantCard = ({ restaurant }) => {
   const rating = restaurant.rating || 4.5;
   const deliveryTime = restaurant.deliveryTime || "30-40";
   
-  // Real restaurant images
   const restaurantImages = {
     'Burger King': 'https://images.unsplash.com/photo-1586816001966-79b736744398?w=500',
     'Pizza Hut': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500',
@@ -25,7 +25,7 @@ const RestaurantCard = ({ restaurant }) => {
     <Link to={`/restaurant/${restaurant._id}`} className="group block w-full">
       <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
         
-        {/* Image Section - Larger */}
+        {/* Image Section */}
         <div className="relative h-56 w-full overflow-hidden bg-gray-200">
           <img 
             src={imageUrl}
@@ -51,18 +51,21 @@ const RestaurantCard = ({ restaurant }) => {
             </div>
           </div>
           
-          {/* Favorite Button */}
-          <button 
-            className="absolute bottom-3 right-3 bg-white p-2 rounded-full hover:bg-gray-100 transition shadow-lg"
-            onClick={(e) => e.preventDefault()}
-          >
-            <Heart className="w-5 h-5 text-gray-500 hover:text-red-500 transition" />
-          </button>
+          {/* Wishlist Button */}
+          <div className="absolute bottom-3 right-3">
+            <WishlistButton
+              type="restaurant"
+              itemId={restaurant._id}
+              name={restaurant.name}
+              image={restaurant.image || imageUrl}
+              rating={restaurant.rating}
+              size="sm"
+            />
+          </div>
         </div>
         
-        {/* Content - Better spacing */}
+        {/* Content */}
         <div className="p-5">
-          {/* Restaurant Name */}
           <div className="flex justify-between items-start mb-2">
             <div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white group-hover:text-primary transition">
@@ -78,7 +81,6 @@ const RestaurantCard = ({ restaurant }) => {
             </div>
           </div>
           
-          {/* Delivery Info - Better layout */}
           <div className="flex items-center gap-4 mb-3 text-sm">
             <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
               <Clock className="w-4 h-4" />
@@ -95,7 +97,6 @@ const RestaurantCard = ({ restaurant }) => {
             </div>
           </div>
           
-          {/* Location */}
           <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
             <MapPin className="w-4 h-4" />
             <span>{restaurant.address?.area || 'Downtown'}</span>
@@ -103,7 +104,6 @@ const RestaurantCard = ({ restaurant }) => {
             <span>2.3 km away</span>
           </div>
           
-          {/* Price and Ratings - Bottom section */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-gray-800 dark:text-white">₹{Math.floor(Math.random() * 400) + 200}</span>

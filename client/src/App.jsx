@@ -1,16 +1,22 @@
-import React from 'react'
-import { AuthProvider } from './context/AuthContext'
-import { CartProvider } from './context/CartContext'
-import AppRoutes from './routes/AppRoutes'
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { SocketProvider } from './context/SocketContext';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <AppRoutes />
-      </CartProvider>
-    </AuthProvider>
-  )
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <SocketProvider>
+            <AppRoutes />
+          </SocketProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

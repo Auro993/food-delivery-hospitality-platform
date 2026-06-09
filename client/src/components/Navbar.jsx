@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, User, LogOut, Menu, X, Utensils, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Menu, X, Utensils, LayoutDashboard, Heart, MessageCircle } from 'lucide-react';
+import { chatAPI } from '../services/api';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +20,23 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const { data } = await chatAPI.getUnreadCount();
+      setUnreadChatCount(data.unreadCount);
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -57,7 +76,7 @@ const Navbar = () => {
               </Link>
             )}
             
-            {/* Show Dashboard ONLY for restaurant owners - NOT for customers */}
+            {/* Show Dashboard ONLY for restaurant owners */}
             {user && user.role === 'restaurant' && (
               <Link to="/dashboard" className="flex items-center gap-1 text-gray-700 hover:text-primary transition font-medium">
                 <LayoutDashboard className="w-4 h-4" />
@@ -65,7 +84,26 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* Cart Icon - Show for all users */}
+            {/* Wishlist Icon */}
+            {user && (
+              <Link to="/wishlist" className="relative">
+                <Heart className="w-5 h-5 text-gray-700 hover:text-primary transition" />
+              </Link>
+            )}
+
+            {/* Chat Icon */}
+            {user && (
+              <Link to="/chat" className="relative">
+                <MessageCircle className="w-5 h-5 text-gray-700 hover:text-primary transition" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {/* Cart Icon */}
             <Link to="/cart" className="relative">
               <ShoppingCart className="w-5 h-5 text-gray-700 hover:text-primary transition" />
               {cartItemsCount > 0 && (
@@ -83,7 +121,6 @@ const Navbar = () => {
                     {user.name?.[0]?.toUpperCase()}
                   </div>
                   <span className="text-gray-700 font-medium">{user.name?.split(' ')[0]}</span>
-                  {/* Show role badge */}
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     user.role === 'restaurant' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
                   }`}>
@@ -97,7 +134,17 @@ const Navbar = () => {
                   <Link to="/orders" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
                     My Orders
                   </Link>
-                  {/* CRITICAL FIX: Show Dashboard in dropdown ONLY for restaurant owners */}
+                  <Link to="/wishlist" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
+                    My Wishlist
+                  </Link>
+                  <Link to="/chat" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
+                    Messages
+                    {unreadChatCount > 0 && (
+                      <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                        {unreadChatCount}
+                      </span>
+                    )}
+                  </Link>
                   {user.role === 'restaurant' && (
                     <Link to="/dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
                       Dashboard
@@ -150,7 +197,23 @@ const Navbar = () => {
               </Link>
             )}
             
-            {/* CRITICAL FIX: Show Dashboard in mobile menu ONLY for restaurant owners */}
+            {user && (
+              <Link to="/wishlist" className="block text-gray-700 hover:text-primary transition py-2" onClick={() => setIsOpen(false)}>
+                Wishlist
+              </Link>
+            )}
+            
+            {user && (
+              <Link to="/chat" className="block text-gray-700 hover:text-primary transition py-2" onClick={() => setIsOpen(false)}>
+                Messages
+                {unreadChatCount > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                    {unreadChatCount}
+                  </span>
+                )}
+              </Link>
+            )}
+            
             {user && user.role === 'restaurant' && (
               <Link to="/dashboard" className="block text-gray-700 hover:text-primary transition py-2" onClick={() => setIsOpen(false)}>
                 Dashboard

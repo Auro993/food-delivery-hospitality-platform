@@ -17,7 +17,7 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// Add response interceptor for debugging
+// Add response interceptor
 API.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -71,7 +71,7 @@ export const orderAPI = {
   getRestaurantOrders: () => API.get('/orders/restaurant'),
 };
 
-// Review APIs - ADD THIS SECTION
+// Review APIs
 export const reviewAPI = {
   createReview: (data) => API.post('/reviews', data),
   getRestaurantReviews: (restaurantId, page = 1) => 
@@ -79,6 +79,23 @@ export const reviewAPI = {
   markHelpful: (reviewId) => API.post(`/reviews/${reviewId}/helpful`),
   replyToReview: (reviewId, replyText) => API.post(`/reviews/${reviewId}/reply`, { replyText }),
   canReview: (orderId) => API.get(`/reviews/can-review/${orderId}`),
+};
+
+// Wishlist APIs
+export const wishlistAPI = {
+  getWishlist: () => API.get('/wishlist'),
+  addItem: (data) => API.post('/wishlist/add', data),
+  removeItem: (type, itemId) => API.delete(`/wishlist/remove/${type}/${itemId}`),
+  checkItem: (type, itemId) => API.get(`/wishlist/check/${type}/${itemId}`),
+  addToCartFromWishlist: (itemId, quantity) => API.post(`/wishlist/add-to-cart/${itemId}`, { quantity }),
+};
+
+// Chat APIs
+export const chatAPI = {
+  getRooms: () => API.get('/chat/rooms'),
+  getMessages: (roomId, page = 1) => API.get(`/chat/messages/${roomId}?page=${page}`),
+  createRoomForOrder: (orderId) => API.post(`/chat/room/order/${orderId}`),
+  getUnreadCount: () => API.get('/chat/unread'),
 };
 
 // Default export
