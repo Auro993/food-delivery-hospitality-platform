@@ -11,7 +11,7 @@ const Footer = () => {
             <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
               DineFlow
             </h3>
-            <p className="text-gray-400">Delivering happiness to your doorstep since 2024</p>
+            <p className="text-gray-400">Delivering happiness to your doorstep since 2026</p>
           </div>
           
           <div>
@@ -44,7 +44,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 DineFlow. All rights reserved.</p>
+          <p>&copy; 2026 DineFlow. All rights reserved.</p>
         </div>
       </div>
     </footer>
