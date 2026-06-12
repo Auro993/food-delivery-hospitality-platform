@@ -343,4 +343,4 @@ const Android = ({ className }) => (
   </svg>
 );
 
-export default Home;
+export default Home; 
