@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Send, X, Minimize2, Maximize2, User, Clock, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { chatAPI } from '../services/api';
 import { useSocket } from '../context/SocketContext';
@@ -87,19 +87,19 @@ const ChatWindow = ({ room, currentUser, onClose, onMinimize }) => {
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-4 right-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50">
-        <div className="flex justify-between items-center p-3 bg-primary text-white rounded-t-xl">
-          <span className="font-semibold">Chat with {otherParticipant?.name}</span>
+      <div className="fixed bottom-4 right-4 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 border border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-3 bg-gradient-to-r from-primary to-secondary text-white rounded-t-xl cursor-pointer" onClick={() => setIsMinimized(false)}>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="font-semibold">Chat with {otherParticipant?.name?.split(' ')[0]}</span>
+          </div>
           <div className="flex gap-2">
-            <button onClick={() => setIsMinimized(false)}>
-              <Maximize2 className="w-4 h-4" />
-            </button>
-            <button onClick={onClose}>
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="hover:bg-white/20 rounded p-1 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div className="p-3 text-center text-gray-500">
+        <div className="p-3 text-center text-gray-500 text-sm">
           {room.lastMessage?.text || 'No messages yet'}
         </div>
       </div>
@@ -107,67 +107,103 @@ const ChatWindow = ({ room, currentUser, onClose, onMinimize }) => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl flex flex-col z-50">
+    <div className="fixed bottom-4 right-4 w-96 h-[500px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center p-3 bg-primary text-white rounded-t-xl">
-        <div>
-          <span className="font-semibold">Chat with {otherParticipant?.name}</span>
-          <p className="text-xs opacity-90">Online</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setIsMinimized(true)}>
-            <Minimize2 className="w-4 h-4" />
-          </button>
-          <button onClick={onClose}>
-            <X className="w-4 h-4" />
-          </button>
+      <div className="bg-gradient-to-r from-primary to-secondary text-white p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Chat with {otherParticipant?.name}</h3>
+              <div className="flex items-center gap-1 mt-0.5">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs opacity-90">Online</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 rounded p-1 transition">
+              <Minimize2 className="w-4 h-4" />
+            </button>
+            <button onClick={onClose} className="hover:bg-white/20 rounded p-1 transition">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
       
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
         {loading ? (
-          <div className="text-center text-gray-500">Loading...</div>
-        ) : (
-          messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.senderId === currentUser._id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[70%] p-2 rounded-lg ${
-                  msg.senderId === currentUser._id
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
-                }`}
-              >
-                <p className="text-sm">{msg.message}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-                </p>
-              </div>
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+              <MessageCircle className="w-8 h-8 text-gray-400" />
             </div>
-          ))
+            <p className="text-gray-500">No messages yet</p>
+            <p className="text-sm text-gray-400 mt-1">Start the conversation!</p>
+          </div>
+        ) : (
+          messages.map((msg, idx) => {
+            const isOwnMessage = msg.senderId === currentUser._id;
+            return (
+              <div
+                key={idx}
+                className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                    isOwnMessage
+                      ? 'bg-gradient-to-r from-primary to-secondary text-white rounded-br-sm'
+                      : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-bl-sm shadow-sm'
+                  }`}
+                >
+                  <p className="text-sm break-words">{msg.message}</p>
+                  <div className={`flex items-center gap-1 mt-1 text-xs ${isOwnMessage ? 'text-white/70' : 'text-gray-400'}`}>
+                    <Clock className="w-3 h-3" />
+                    <span>{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+                    {isOwnMessage && <CheckCheck className="w-3 h-3 ml-1" />}
+                  </div>
+                </div>
+              </div>
+            );
+          })
         )}
         {userTyping && (
-          <div className="text-xs text-gray-500 italic">
-            {userTyping} is typing...
+          <div className="flex justify-start">
+            <div className="bg-white dark:bg-gray-700 rounded-2xl px-4 py-2 shadow-sm">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <span className="text-xs text-gray-500 ml-1">{userTyping} is typing...</span>
+              </div>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
       
       {/* Input */}
-      <form onSubmit={handleSendMessage} className="p-3 border-t dark:border-gray-700">
+      <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={handleTyping}
             placeholder="Type a message..."
-            className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-primary dark:bg-gray-700"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-gray-700 dark:text-white transition"
           />
-          <button type="submit" className="bg-primary text-white p-2 rounded-lg hover:bg-secondary transition">
+          <button
+            type="submit"
+            disabled={!newMessage.trim()}
+            className="bg-gradient-to-r from-primary to-secondary text-white p-2 rounded-full hover:scale-105 transition disabled:opacity-50 disabled:hover:scale-100 w-10 h-10 flex items-center justify-center"
+          >
             <Send className="w-5 h-5" />
           </button>
         </div>

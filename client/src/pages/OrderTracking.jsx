@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft, MapPin, CreditCard, Star } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { CheckCircle, Clock, Package, Truck, Home, ArrowLeft, MapPin, CreditCard, Star, MessageCircle } from 'lucide-react';
 import socketService from '../socket/socket';
 import { orderAPI, reviewAPI } from '../services/api';
 import Loader from '../components/Loader';
@@ -198,6 +198,22 @@ const OrderTracking = () => {
                   <p className="font-semibold">₹{item.totalPrice || item.price * item.quantity}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Chat Button - ADDED */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+            <div className="text-center">
+              <MessageCircle className="w-12 h-12 text-primary mx-auto mb-3" />
+              <h3 className="text-xl font-semibold mb-2">Need help with your order?</h3>
+              <p className="text-gray-500 mb-4">Chat directly with the restaurant</p>
+              <Link
+                to={`/chat?orderId=${order._id}`}
+                className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl hover:bg-secondary transition"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Chat with Restaurant
+              </Link>
             </div>
           </div>
 
