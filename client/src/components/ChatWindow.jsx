@@ -3,6 +3,7 @@ import { Send, X, Minimize2, Maximize2, User, Clock, CheckCheck } from 'lucide-r
 import { formatDistanceToNow } from 'date-fns';
 import { chatAPI } from '../services/api';
 import { useSocket } from '../context/SocketContext';
+import { MessageCircle } from 'lucide-react';
 
 const ChatWindow = ({ room, currentUser, onClose, onMinimize }) => {
   const [messages, setMessages] = useState([]);

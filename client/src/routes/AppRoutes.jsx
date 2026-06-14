@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Loader from '../components/Loader';
-const Chat = React.lazy(() => import('../pages/Chat'));
 
 // Lazy load pages
 const Home = React.lazy(() => import('../pages/Home'));
@@ -21,6 +20,9 @@ const Dashboard = React.lazy(() => import('../pages/Dashboard'));
 const AddMenu = React.lazy(() => import('../pages/AddMenu'));
 const Profile = React.lazy(() => import('../pages/Profile'));
 const Wishlist = React.lazy(() => import('../pages/Wishlist'));
+const Chat = React.lazy(() => import('../pages/Chat'));
+const PaymentSuccess = React.lazy(() => import('../pages/PaymentSuccess'));
+const PaymentFailure = React.lazy(() => import('../pages/PaymentFailure'));
 const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 const AppRoutes = () => {
@@ -68,6 +70,23 @@ const AppRoutes = () => {
               <Wishlist />
             </ProtectedRoute>
           } />
+          <Route path="/chat" element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          } />
+          
+          {/* Payment Routes */}
+          <Route path="/payment-success" element={
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          } />
+          <Route path="/payment-failure" element={
+            <ProtectedRoute>
+              <PaymentFailure />
+            </ProtectedRoute>
+          } />
           
           {/* Restaurant ONLY Routes */}
           <Route path="/dashboard" element={
@@ -80,12 +99,6 @@ const AppRoutes = () => {
               <AddMenu />
             </ProtectedRoute>
           } />
-          // Add to Routes
-<Route path="/chat" element={
-  <ProtectedRoute>
-    <Chat />
-  </ProtectedRoute>
-} />
           
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />

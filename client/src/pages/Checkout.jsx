@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderAPI } from '../services/api';
 import { CreditCard, MapPin, Calendar, ArrowLeft } from 'lucide-react';
+import RazorpayPayment from '../components/RazorpayPayment';
 
 const Checkout = () => {
   const { cart, clearCart, fetchCart } = useCart();
@@ -11,14 +12,15 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const [formData, setFormData] = useState({
     address: '',
     city: '',
     pincode: '',
     phone: user?.phone || '',
-    paymentMethod: 'cod',
     specialInstructions: '',
   });
+  const [orderId, setOrderId] = useState(null);
 
   const deliveryFee = (cart.totalPrice || 0) > 500 ? 0 : 40;
   const tax = (cart.totalPrice || 0) * 0.05;
@@ -28,34 +30,28 @@ const Checkout = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handlePlaceOrder = async () => {
     setError('');
     setLoading(true);
 
-    // Validation
     if (!formData.address || !formData.city || !formData.pincode) {
       setError('Please fill in all address fields');
       setLoading(false);
-      return;
+      return false;
     }
 
     if (!cart.items || cart.items.length === 0) {
       setError('Your cart is empty');
       setLoading(false);
-      return;
+      return false;
     }
 
-    // Get restaurant ID from the first cart item (stored when adding to cart)
     const restaurantId = cart.items[0]?.restaurantId;
     
-    console.log('Cart items:', cart.items);
-    console.log('Restaurant ID from cart:', restaurantId);
-
     if (!restaurantId) {
       setError('Restaurant information missing. Please try adding items to cart again.');
       setLoading(false);
-      return;
+      return false;
     }
 
     const orderData = {
@@ -72,28 +68,41 @@ const Checkout = () => {
         city: formData.city,
         pincode: formData.pincode,
       },
-      paymentMethod: formData.paymentMethod,
+      paymentMethod: paymentMethod,
       specialInstructions: formData.specialInstructions,
     };
-
-    console.log('Placing order:', orderData);
 
     try {
       const { data } = await orderAPI.createOrder(orderData);
       console.log('Order response:', data);
-      
-      // Clear cart
-      await clearCart();
-      await fetchCart();
-      
-      // Navigate to order tracking
-      navigate(`/tracking/${data.order._id}`);
+      setOrderId(data.order._id);
+      return data.order._id;
     } catch (err) {
       console.error('Order failed:', err);
       setError(err.response?.data?.message || 'Failed to place order. Please try again.');
-    } finally {
       setLoading(false);
+      return false;
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const createdOrderId = await handlePlaceOrder();
+    if (createdOrderId) {
+      await clearCart();
+      await fetchCart();
+      navigate(`/tracking/${createdOrderId}`);
+    }
+  };
+
+  const handlePaymentSuccess = async (orderId) => {
+    await clearCart();
+    await fetchCart();
+    navigate(`/payment-success?orderId=${orderId}`);
+  };
+
+  const handlePaymentFailure = (orderId) => {
+    navigate(`/payment-failure?orderId=${orderId}`);
   };
 
   if (!cart.items || cart.items.length === 0) {
@@ -129,7 +138,7 @@ const Checkout = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6">
               {/* Delivery Address */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
                 <div className="flex items-center gap-2 mb-4">
@@ -202,21 +211,22 @@ const Checkout = () => {
                       type="radio"
                       name="paymentMethod"
                       value="cod"
-                      checked={formData.paymentMethod === 'cod'}
-                      onChange={handleChange}
+                      checked={paymentMethod === 'cod'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-4 h-4 text-primary"
                     />
                     <span>Cash on Delivery</span>
                   </label>
-                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 opacity-50">
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="online"
-                      disabled
-                      className="w-4 h-4"
+                      checked={paymentMethod === 'online'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-4 h-4 text-primary"
                     />
-                    <span>Online Payment (Coming Soon)</span>
+                    <span>Online Payment (Card/UPI/Netbanking)</span>
                   </label>
                 </div>
               </div>
@@ -280,20 +290,29 @@ const Checkout = () => {
                 </div>
               </div>
 
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="btn-primary w-full mt-6 disabled:opacity-50"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Placing Order...
-                  </span>
-                ) : (
-                  `Place Order • ₹${total.toFixed(2)}`
-                )}
-              </button>
+              {paymentMethod === 'online' ? (
+                <RazorpayPayment
+                  amount={total}
+                  orderId={orderId}
+                  onSuccess={handlePaymentSuccess}
+                  onFailure={handlePaymentFailure}
+                />
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="btn-primary w-full mt-6 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Placing Order...
+                    </span>
+                  ) : (
+                    `Place Order • ₹${total.toFixed(2)}`
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

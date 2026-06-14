@@ -98,5 +98,11 @@ export const chatAPI = {
   getUnreadCount: () => API.get('/chat/unread'),
 };
 
+// Payment APIs - ADD THIS SECTION
+export const paymentAPI = {
+  createOrder: (amount, orderId) => API.post('/payments/create-order', { amount, orderId }),
+  verifyPayment: (data) => API.post('/payments/verify-payment', data),
+};
+
 // Default export
 export default API;

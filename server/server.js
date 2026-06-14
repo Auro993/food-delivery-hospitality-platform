@@ -14,6 +14,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 dotenv.config();
 connectDB();
