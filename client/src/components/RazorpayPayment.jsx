@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const RazorpayPayment = ({ amount, orderId, onSuccess, onFailure }) => {
   const [loading, setLoading] = useState(false);
+  const hasTriggered = useRef(false); // Prevent double execution
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Only trigger once when orderId is available and not yet triggered
+    if (orderId && !hasTriggered.current && !loading) {
+      hasTriggered.current = true;
+      handlePayment();
+    }
+  }, [orderId]);
+
   const handlePayment = async () => {
+    if (!orderId) {
+      console.error('No orderId provided');
+      if (onFailure) onFailure(null);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const token = localStorage.getItem('token');
       
-      // Create order on backend
+      console.log('Creating Razorpay order for:', { amount, orderId });
+      
       const { data } = await axios.post(
         'http://localhost:5000/api/payments/create-order',
         { amount, orderId },
@@ -24,6 +40,8 @@ const RazorpayPayment = ({ amount, orderId, onSuccess, onFailure }) => {
         }
       );
 
+      console.log('Razorpay order created:', data);
+
       const options = {
         key: data.key_id,
         amount: data.amount,
@@ -32,9 +50,9 @@ const RazorpayPayment = ({ amount, orderId, onSuccess, onFailure }) => {
         description: `Order #${orderId.slice(-8)}`,
         order_id: data.order_id,
         handler: async (response) => {
+          console.log('Payment handler response:', response);
           try {
-            // Verify payment
-            await axios.post(
+            const verifyRes = await axios.post(
               'http://localhost:5000/api/payments/verify-payment',
               {
                 razorpay_order_id: response.razorpay_order_id,
@@ -45,11 +63,13 @@ const RazorpayPayment = ({ amount, orderId, onSuccess, onFailure }) => {
               { headers: { Authorization: `Bearer ${token}` } }
             );
             
-            if (onSuccess) onSuccess();
+            console.log('Payment verified:', verifyRes.data);
+            
+            if (onSuccess) onSuccess(orderId);
             navigate(`/payment-success?orderId=${orderId}`);
           } catch (error) {
             console.error('Verification failed:', error);
-            if (onFailure) onFailure();
+            if (onFailure) onFailure(orderId);
             navigate(`/payment-failure?orderId=${orderId}`);
           }
         },
@@ -69,31 +89,25 @@ const RazorpayPayment = ({ amount, orderId, onSuccess, onFailure }) => {
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on('payment.failed', (response) => {
+        console.error('Payment failed:', response);
+        alert('Payment failed. Please try again.');
+        if (onFailure) onFailure(orderId);
+      });
+      
       razorpay.open();
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Failed to initiate payment. Please try again.');
+      console.error('Payment error details:', error);
+      console.error('Error response:', error.response?.data);
+      alert(error.response?.data?.message || 'Failed to initiate payment. Please try again.');
+      if (onFailure) onFailure(orderId);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <button
-      onClick={handlePayment}
-      disabled={loading}
-      className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
-    >
-      {loading ? (
-        <span className="flex items-center justify-center gap-2">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          Processing...
-        </span>
-      ) : (
-        `Pay ₹${amount} via Card/UPI`
-      )}
-    </button>
-  );
+  // Don't render anything visible
+  return null;
 };
 
 export default RazorpayPayment;

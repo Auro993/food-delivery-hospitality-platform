@@ -13,6 +13,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [createdOrderId, setCreatedOrderId] = useState(null);
   const [formData, setFormData] = useState({
     address: '',
     city: '',
@@ -20,7 +21,6 @@ const Checkout = () => {
     phone: user?.phone || '',
     specialInstructions: '',
   });
-  const [orderId, setOrderId] = useState(null);
 
   const deliveryFee = (cart.totalPrice || 0) > 500 ? 0 : 40;
   const tax = (cart.totalPrice || 0) * 0.05;
@@ -30,20 +30,21 @@ const Checkout = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePlaceOrder = async () => {
+  // Create order first (for both COD and Online)
+  const createOrder = async () => {
     setError('');
     setLoading(true);
 
     if (!formData.address || !formData.city || !formData.pincode) {
       setError('Please fill in all address fields');
       setLoading(false);
-      return false;
+      return null;
     }
 
     if (!cart.items || cart.items.length === 0) {
       setError('Your cart is empty');
       setLoading(false);
-      return false;
+      return null;
     }
 
     const restaurantId = cart.items[0]?.restaurantId;
@@ -51,7 +52,7 @@ const Checkout = () => {
     if (!restaurantId) {
       setError('Restaurant information missing. Please try adding items to cart again.');
       setLoading(false);
-      return false;
+      return null;
     }
 
     const orderData = {
@@ -74,27 +75,36 @@ const Checkout = () => {
 
     try {
       const { data } = await orderAPI.createOrder(orderData);
-      console.log('Order response:', data);
-      setOrderId(data.order._id);
+      console.log('Order created:', data.order._id);
       return data.order._id;
     } catch (err) {
-      console.error('Order failed:', err);
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
+      console.error('Order creation failed:', err);
+      setError(err.response?.data?.message || 'Failed to create order');
+      return null;
+    } finally {
       setLoading(false);
-      return false;
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const createdOrderId = await handlePlaceOrder();
-    if (createdOrderId) {
+  // Handle COD order
+  const handleCODOrder = async () => {
+    const orderId = await createOrder();
+    if (orderId) {
       await clearCart();
       await fetchCart();
-      navigate(`/tracking/${createdOrderId}`);
+      navigate(`/tracking/${orderId}`);
     }
   };
 
+  // Handle Online Payment - Create order first, then pay
+  const handleOnlinePayment = async () => {
+    const orderId = await createOrder();
+    if (orderId) {
+      setCreatedOrderId(orderId);
+    }
+  };
+
+  // Callback when payment is successful
   const handlePaymentSuccess = async (orderId) => {
     await clearCart();
     await fetchCart();
@@ -138,7 +148,7 @@ const Checkout = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
-            <form className="space-y-6">
+            <div className="space-y-6">
               {/* Delivery Address */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
                 <div className="flex items-center gap-2 mb-4">
@@ -246,7 +256,7 @@ const Checkout = () => {
                   placeholder="Any special requests for the restaurant?"
                 ></textarea>
               </div>
-            </form>
+            </div>
           </div>
 
           {/* Order Summary */}
@@ -291,26 +301,31 @@ const Checkout = () => {
               </div>
 
               {paymentMethod === 'online' ? (
-                <RazorpayPayment
-                  amount={total}
-                  orderId={orderId}
-                  onSuccess={handlePaymentSuccess}
-                  onFailure={handlePaymentFailure}
-                />
+                <div className="mt-6">
+                  {!createdOrderId ? (
+                    <button
+                      onClick={handleOnlinePayment}
+                      disabled={loading}
+                      className="btn-primary w-full disabled:opacity-50"
+                    >
+                      {loading ? 'Creating Order...' : 'Proceed to Pay'}
+                    </button>
+                  ) : (
+                    <RazorpayPayment
+                      amount={total}
+                      orderId={createdOrderId}
+                      onSuccess={handlePaymentSuccess}
+                      onFailure={handlePaymentFailure}
+                    />
+                  )}
+                </div>
               ) : (
                 <button
-                  onClick={handleSubmit}
+                  onClick={handleCODOrder}
                   disabled={loading}
                   className="btn-primary w-full mt-6 disabled:opacity-50"
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Placing Order...
-                    </span>
-                  ) : (
-                    `Place Order • ₹${total.toFixed(2)}`
-                  )}
+                  {loading ? 'Placing Order...' : `Place Order • ₹${total.toFixed(2)}`}
                 </button>
               )}
             </div>

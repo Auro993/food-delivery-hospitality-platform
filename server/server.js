@@ -169,7 +169,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/payments", paymentRoutes);
 // HOME ROUTE
 app.get("/", (req, res) => {
   res.send("DineFlow API Running 🚀");

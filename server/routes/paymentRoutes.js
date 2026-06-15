@@ -1,17 +1,22 @@
 const express = require("express");
 const router = express.Router();
+
+// Load environment variables FIRST
+const dotenv = require('dotenv');
+dotenv.config();
+
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 const auth = require("../middleware/auth");
 
-// Debug: Check if environment variables are loaded
+// Debug: Check if environment variables are loaded (after dotenv.config)
 console.log('🔍 Checking Razorpay Environment Variables:');
 console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? '✅ Present' : '❌ Missing');
 console.log('RAZORPAY_KEY_SECRET:', process.env.RAZORPAY_KEY_SECRET ? '✅ Present' : '❌ Missing');
 
-// Initialize Razorpay with your test keys
+// Initialize Razorpay
 let razorpay;
 try {
   razorpay = new Razorpay({
@@ -31,7 +36,7 @@ router.post("/create-order", auth, async (req, res) => {
     console.log(`📝 Creating Razorpay order for amount: ₹${amount}, orderId: ${orderId}`);
 
     const options = {
-      amount: Math.round(amount * 100), // Convert to paise
+      amount: Math.round(amount * 100),
       currency: "INR",
       receipt: `order_${orderId}`,
       payment_capture: 1,
@@ -44,7 +49,6 @@ router.post("/create-order", auth, async (req, res) => {
     const razorpayOrder = await razorpay.orders.create(options);
     console.log(`✅ Razorpay order created: ${razorpayOrder.id}`);
 
-    // Save payment record
     const payment = new Payment({
       orderId: orderId,
       userId: req.user.id,
@@ -54,7 +58,6 @@ router.post("/create-order", auth, async (req, res) => {
       status: "created",
     });
     await payment.save();
-    console.log(`💾 Payment record saved for order: ${orderId}`);
 
     res.json({
       success: true,
@@ -78,21 +81,13 @@ router.post("/verify-payment", auth, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
 
-    console.log(`🔐 Verifying payment for order: ${orderId}`);
-    console.log(`Razorpay Order ID: ${razorpay_order_id}`);
-    console.log(`Razorpay Payment ID: ${razorpay_payment_id}`);
-
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 
-    console.log(`Expected Signature: ${expectedSignature}`);
-    console.log(`Received Signature: ${razorpay_signature}`);
-
     if (expectedSignature === razorpay_signature) {
-      // Update payment record
       await Payment.findOneAndUpdate(
         { razorpayOrderId: razorpay_order_id },
         {
@@ -103,38 +98,25 @@ router.post("/verify-payment", auth, async (req, res) => {
         }
       );
 
-      // Update order
       await Order.findByIdAndUpdate(orderId, {
         paymentStatus: "paid",
         paymentMethod: "online",
         orderStatus: "confirmed",
       });
 
-      console.log(`✅ Payment verified successfully for order: ${orderId}`);
+      console.log(`✅ Payment verified for order: ${orderId}`);
 
-      res.json({ 
-        success: true, 
-        message: "Payment verified successfully" 
-      });
+      res.json({ success: true, message: "Payment verified" });
     } else {
-      console.log(`❌ Invalid signature for order: ${orderId}`);
-      
       await Payment.findOneAndUpdate(
         { razorpayOrderId: razorpay_order_id },
         { status: "failed", updatedAt: new Date() }
       );
-      
-      res.status(400).json({ 
-        success: false, 
-        message: "Invalid payment signature" 
-      });
+      res.status(400).json({ success: false, message: "Invalid signature" });
     }
   } catch (error) {
     console.error("❌ Payment verification error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
