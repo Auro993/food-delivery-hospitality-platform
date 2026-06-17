@@ -22,28 +22,58 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// CORS configuration
+// ============================================================
+// CORS configuration - Allow both localhost and Vercel
+// ============================================================
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://dineflow-smoky.vercel.app',
+  'https://dineflow.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('❌ Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+// ============================================================
 // SOCKET.IO with CORS
+// ============================================================
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST"]
   },
 });
 
-// IMPORTANT: Body parsing middleware MUST come before routes
+// ============================================================
+// Body parsing middleware
+// ============================================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ============================================================
 // Logging middleware
+// ============================================================
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   if (req.method === 'POST' || req.method === 'PUT') {
@@ -52,10 +82,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// ============================================================
 // Track online users for chat
+// ============================================================
 const onlineUsers = new Map();
 
+// ============================================================
 // SOCKET CONNECTION with Chat
+// ============================================================
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
@@ -160,7 +194,9 @@ io.on("connection", (socket) => {
   });
 });
 
+// ============================================================
 // ROUTES
+// ============================================================
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
@@ -170,12 +206,17 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/payments", paymentRoutes);
+
+// ============================================================
 // HOME ROUTE
+// ============================================================
 app.get("/", (req, res) => {
   res.send("DineFlow API Running 🚀");
 });
 
+// ============================================================
 // 404 Handler
+// ============================================================
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -183,7 +224,9 @@ app.use((req, res) => {
   });
 });
 
+// ============================================================
 // Global error handling
+// ============================================================
 app.use((err, req, res, next) => {
   console.error('Global Error:', err);
   res.status(500).json({
@@ -193,9 +236,11 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ============================================================
 // SERVER
+// ============================================================
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`CORS enabled for http://localhost:3000`);
+  console.log(`CORS enabled for: ${allowedOrigins.join(', ')}`);
 });
