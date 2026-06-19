@@ -23,19 +23,28 @@ const app = express();
 const server = http.createServer(app);
 
 // ============================================================
-// CORS configuration - Allow both localhost and Vercel
+// CORS configuration - Allow ALL Vercel URLs and localhost
 // ============================================================
 const allowedOrigins = [
   'http://localhost:3000',
   'https://dineflow-smoky.vercel.app',
-  'https://dineflow.vercel.app'
+  'https://dineflow.vercel.app',
+  'https://dineflow-app-vert.vercel.app',  // ADD THIS
+  'https://dineflow-app.vercel.app',       // ADD THIS
 ];
+
+// Allow any vercel.app domain (for future deployments)
+const isVercelUrl = (origin) => {
+  return origin && (origin.includes('.vercel.app') || origin.includes('localhost'));
+};
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || isVercelUrl(origin)) {
       callback(null, true);
     } else {
       console.log('❌ Blocked by CORS:', origin);
@@ -54,7 +63,7 @@ const io = new Server(server, {
   cors: {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.indexOf(origin) !== -1 || isVercelUrl(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
