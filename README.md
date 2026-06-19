@@ -1,198 +1,84 @@
 # 🍔 DineFlow - Food Delivery Platform
 
-A full-stack food delivery application inspired by Swiggy and Zomato.
+> A full-stack food delivery application inspired by Swiggy and Zomato
+
+---
 
 ## ✨ Features
 
 ### 👤 Customers
-- Register/Login with JWT Authentication
-- Browse restaurants with search & filters
-- View restaurant menus with categories
-- Add items to cart with quantity control
-- Place orders (COD & Online Payment)
-- Real-time order tracking (Socket.io)
-- Rate & review delivered orders (1-5 stars)
-- Wishlist to save favorite restaurants & dishes
-- Edit profile & change password
-- Real-time chat with restaurant owners
+- 🔐 JWT Authentication (Login/Register)
+- 🏪 Browse Restaurants with Search & Filters
+- 🛒 Add to Cart & Checkout
+- 💳 COD & Online Payment (Razorpay)
+- 📡 Real-time Order Tracking
+- ⭐ Rate & Review Orders
+- ❤️ Wishlist (Save Favorites)
+- 💬 Live Chat with Restaurants
 
 ### 🏪 Restaurant Owners
-- Create & manage restaurant profile
-- Add/edit/delete menu items
-- Dashboard with order statistics
-- Update order status (Pending → Confirmed → Preparing → Out for Delivery → Delivered)
-- Real-time new order notifications
-- Reply to customer reviews
-- Chat with customers
+- 📊 Dashboard with Order Stats
+- 📝 Manage Menu (Add/Edit/Delete)
+- 🔄 Update Order Status
+- 💬 Reply to Reviews & Chat
 
-### 💳 Payments
-- Cash on Delivery (COD)
-- Online Payment via Razorpay
-- Cards, UPI, Netbanking, Wallets
+---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | React 18, Vite, Tailwind CSS, Axios, Socket.io-client |
-| **Backend** | Node.js, Express, MongoDB, Mongoose, JWT, Bcrypt, Razorpay |
-| **Real-time** | Socket.io |
-| **Database** | MongoDB Atlas |
-| **Deployment** | Vercel (Frontend), Render (Backend) |
+| Frontend | Backend | Database |
+|----------|---------|----------|
+| React 18 | Node.js | MongoDB |
+| Vite | Express | Mongoose |
+| Tailwind CSS | JWT | Atlas |
+| Socket.io | Razorpay | |
 
-## 🚀 Live Demo
+---
 
-- **Frontend:** https://dineflow-app-vert.vercel.app
-- **Backend:** https://dineflow-server-jibu.onrender.com
-
-
-## 📋 Key Pages
-
-| Page | Description |
-|------|-------------|
-| **Home** | Splash screen, hero section, categories, popular restaurants |
-| **Login/Register** | JWT authentication with role-based access |
-| **Restaurants** | Search, filters, sorting by rating/delivery time |
-| **Restaurant Details** | Menu items, add to cart with quantity |
-| **Cart** | Manage items, quantity controls, checkout |
-| **Orders** | Order history with status tracking |
-| **Order Tracking** | Real-time updates with Socket.io |
-| **Dashboard** | Restaurant owner analytics and order management |
-| **Profile** | Edit profile, change password |
-| **Wishlist** | Saved favorites with add to cart option |
-| **Chat** | Real-time messaging with restaurant owners |
-
-## 🎯 Core Features Explained
-
-### 🔐 Authentication & Authorization
-- JWT-based authentication
-- Role-based access (Customer/Restaurant Owner)
-- Protected routes for authenticated users
-
-### 📡 Real-time Features
-- Order status updates via Socket.io
-- Live chat between customers and restaurants
-- Typing indicators and read receipts
-
-### 💳 Payment Integration
-- Razorpay payment gateway
-- Support for Cards, UPI, Netbanking
-- Secure payment verification with signatures
-
-### 🏪 Restaurant Management
-- Create and manage restaurant profile
-- Menu management (Add, Edit, Delete)
-- Order management with status updates
-- Revenue and order analytics
-
-## 🚀 Installation
-
-### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
-
-### Steps
+## 🚀 Quick Start
 
 ```bash
-# Clone repository
+# Clone
 git clone https://github.com/Auro993/food-delivery-hospitality-platform.git
 cd food-delivery-hospitality-platform
 
-# Install backend dependencies
-cd server
-npm install
+# Backend
+cd server && npm install
+npm run dev
 
-# Install frontend dependencies
-cd ../client
-npm install
+# Frontend (new terminal)
+cd client && npm install
+npm run dev
 
-# Setup environment variables
-# Create .env file in server folder
+Environment Variables
+Backend (.env)
+
+env
 PORT=5000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-RAZORPAY_KEY_ID=your_razorpay_key
-RAZORPAY_KEY_SECRET=your_razorpay_secret
+MONGO_URI=your_mongodb_url
+JWT_SECRET=your_secret
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+Frontend (.env.production)
 
-# Run backend
-cd server
-npm run dev
+env
+VITE_API_URL=https://your-backend-url.onrender.com/api
+🌐 Live Demo
+Service	URL
+Frontend	https://dineflow-app-vert.vercel.app
+Backend	https://dineflow-server-jibu.onrender.com
+📊 Project Stats
+Metric	Value
+Features	15+
+API Endpoints	50+
+Models	10+
+Code Lines	10,000+
+👨‍💻 Author
+Aurosmita Sahoo
 
-# Run frontend (in new terminal)
-cd client
-npm run dev
+GitHub: @Auro993
 
-# Open http://localhost:3000
+Project: food-delivery-hospitality-platform
 
-
-
-╔══════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                  ║
-║                    ╔══════════════════════════════════════════╗                  ║
-║                    ║      🔧 ENVIRONMENT VARIABLES           ║                  ║
-║                    ╚══════════════════════════════════════════╝                  ║
-║                                                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐ ║
-║  │  BACKEND (.env)                                                             │ ║
-║  ├─────────────────────────────────────────────────────────────────────────────┤ ║
-║  │  PORT=5000                                                                  │ ║
-║  │  MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/dineflow    │ ║
-║  │  JWT_SECRET=your_jwt_secret_key                                            │ ║
-║  │  RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx                                       │ ║
-║  │  RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxx                                    │ ║
-║  └─────────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐ ║
-║  │  FRONTEND (.env.production)                                                 │ ║
-║  ├─────────────────────────────────────────────────────────────────────────────┤ ║
-║  │  VITE_API_URL=https://your-backend-url.onrender.com/api                    │ ║
-║  └─────────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                                  ║
-║                    ╔══════════════════════════════════════════╗                  ║
-║                    ║      📊 PROJECT STATS                   ║                  ║
-║                    ╚══════════════════════════════════════════╝                  ║
-║                                                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐ ║
-║  │  📌 Metric              │  📈 Value                                        │ ║
-║  ├─────────────────────────────────────────────────────────────────────────────┤ ║
-║  │  Features               │  15+                                             │ ║
-║  │  API Endpoints          │  50+                                             │ ║
-║  │  Database Models        │  10+                                             │ ║
-║  │  Code Lines             │  10,000+                                         │ ║
-║  │  Total Pages            │  15+                                             │ ║
-║  │  Components             │  20+                                             │ ║
-║  └─────────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                                  ║
-║                    ╔══════════════════════════════════════════╗                  ║
-║                    ║      👨‍💻 AUTHOR                        ║                  ║
-║                    ╚══════════════════════════════════════════╝                  ║
-║                                                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐ ║
-║  │                                                                             │ ║
-║  │               🧑 Aurosmita Sahoo                                           │ ║
-║  │                                                                             │ ║
-║  │               🔗 GitHub: @Auro993                                          │ ║
-║  │               📁 Project: food-delivery-hospitality-platform               │ ║
-║  │               🌐 Live: https://dineflow-app-vert.vercel.app                │ ║
-║  │                                                                             │ ║
-║  └─────────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                                  ║
-║                    ╔══════════════════════════════════════════╗                  ║
-║                    ║      📄 LICENSE                        ║                  ║
-║                    ╚══════════════════════════════════════════╝                  ║
-║                                                                                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐ ║
-║  │                                                                             │ ║
-║  │                             MIT License                                     │ ║
-║  │                                                                             │ ║
-║  │    Copyright (c) 2024 Aurosmita Sahoo                                      │ ║
-║  │                                                                             │ ║
-║  │    Permission is hereby granted, free of charge, to any person obtaining   │ ║
-║  │    a copy of this software and associated documentation files...            │ ║
-║  │                                                                             │ ║
-║  └─────────────────────────────────────────────────────────────────────────────┘ ║
-║                                                                                  ║
-║                                                                                  ║
-║                          🎉 Thank You! 🎉                                       ║
-║                                                                                  ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+📄 License
+MIT © 2026 Aurosmita Sahoo
