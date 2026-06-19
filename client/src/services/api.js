@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Use environment variable for production, fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+console.log('🔗 API Base URL:', API_BASE_URL);
+
 const API = axios.create({ 
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -98,7 +103,7 @@ export const chatAPI = {
   getUnreadCount: () => API.get('/chat/unread'),
 };
 
-// Payment APIs - ADD THIS SECTION
+// Payment APIs
 export const paymentAPI = {
   createOrder: (amount, orderId) => API.post('/payments/create-order', { amount, orderId }),
   verifyPayment: (data) => API.post('/payments/verify-payment', data),

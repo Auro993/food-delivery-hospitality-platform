@@ -5,6 +5,9 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+// Use environment variable for API URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const RestaurantDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -27,19 +30,24 @@ const RestaurantDetails = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch restaurant details
-      const restaurantRes = await axios.get(`http://localhost:5000/api/restaurants/${id}`);
-      console.log('Restaurant:', restaurantRes.data);
+      console.log('🔗 API Base URL:', API_BASE_URL);
+      console.log('🔗 Fetching restaurant with ID:', id);
+      
+      // Fetch restaurant details - USING ENVIRONMENT VARIABLE
+      const restaurantRes = await axios.get(`${API_BASE_URL}/restaurants/${id}`);
+      console.log('✅ Restaurant response:', restaurantRes.data);
       
       if (restaurantRes.data && restaurantRes.data.restaurant) {
         setRestaurant(restaurantRes.data.restaurant);
       } else if (restaurantRes.data && !restaurantRes.data.restaurant) {
         setRestaurant(restaurantRes.data);
+      } else {
+        setError('Restaurant not found');
       }
       
-      // Fetch ALL menu items
-      const menuRes = await axios.get('http://localhost:5000/api/menu');
-      console.log('All menu:', menuRes.data);
+      // Fetch menu items - USING ENVIRONMENT VARIABLE
+      const menuRes = await axios.get(`${API_BASE_URL}/menu`);
+      console.log('✅ Menu response:', menuRes.data);
       
       // Filter menu items for this restaurant
       let restaurantMenu = [];
@@ -72,10 +80,10 @@ const RestaurantDetails = () => {
         initialQuantities[item._id] = 1;
       });
       setQuantities(initialQuantities);
-      console.log(`Found ${restaurantMenu.length} menu items`);
+      console.log(`✅ Found ${restaurantMenu.length} menu items`);
       
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error fetching restaurant:', error);
       setError('Failed to load restaurant');
     } finally {
       setLoading(false);
@@ -119,6 +127,7 @@ const RestaurantDetails = () => {
       <div className="min-h-screen pt-20 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Restaurant Not Found</h1>
+          <p className="text-gray-600 mb-6">{error || "The restaurant you're looking for doesn't exist."}</p>
           <Link to="/" className="bg-orange-500 text-white px-6 py-3 rounded-xl hover:bg-orange-600 transition">
             Back to Home
           </Link>
