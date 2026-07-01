@@ -154,13 +154,9 @@ Create a `.env` file inside the **server** folder.
 
 ```env
 PORT=5000
-
 MONGO_URI=your_mongodb_connection_string
-
 JWT_SECRET=your_secret_key
-
 RAZORPAY_KEY_ID=your_razorpay_key
-
 RAZORPAY_KEY_SECRET=your_razorpay_secret
 ```
 
@@ -184,45 +180,9 @@ npm run dev
 
 Visit:
 
-```
+```text
 http://localhost:3000
 ```
-
----
-
-# 📸 Screenshots
-
-### 🏠 Home Page
-
-- Hero Section
-- Restaurant Search
-- Categories
-- Featured Restaurants
-
-### 🍔 Restaurant Details
-
-- Menu
-- Food Cards
-- Add to Cart
-
-### 🛒 Cart & Checkout
-
-- Order Summary
-- COD
-- Razorpay Payment
-
-### 📡 Order Tracking
-
-- Live Order Status
-- Delivery Address
-- Estimated Delivery Time
-
-### 📊 Restaurant Dashboard
-
-- Analytics
-- Revenue
-- Order Management
-- Menu Management
 
 ---
 
@@ -232,25 +192,23 @@ Contributions are always welcome!
 
 1. Fork the repository
 
-2. Create a feature branch
-
 ```bash
 git checkout -b feature/AmazingFeature
 ```
 
-3. Commit your changes
+2. Commit your changes
 
 ```bash
 git commit -m "Add AmazingFeature"
 ```
 
-4. Push your branch
+3. Push your branch
 
 ```bash
 git push origin feature/AmazingFeature
 ```
 
-5. Open a Pull Request
+4. Open a Pull Request
 
 ---
 
@@ -286,7 +244,7 @@ MIT License © 2024 Aurosmita Sahoo
 
 # ⭐ Support
 
-If you enjoyed this project, please consider giving it a ⭐ on GitHub.
+If you found this project useful, please consider giving it a ⭐ on GitHub.
 
 Your support motivates future improvements and open-source contributions.
 
